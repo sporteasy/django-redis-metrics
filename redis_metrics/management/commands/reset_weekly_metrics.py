@@ -38,10 +38,7 @@ class Command(BaseCommand):
         r = R()
 
         # Retrieve all the metric keys of the form: "m:<slug>:w:<nn>"
-        weekly_keys = filter(
-            lambda k: re.match(r'^m:.+:w:\d\d', k) is not None,
-            r.r.smembers(r._metric_slugs_key)
-        )
+        weekly_keys = [k for k in r.r.smembers(r._metric_slugs_key) if re.match(r'^m:.+:w:\d\d', k) is not None]
         for old_key in weekly_keys:
             # Match   -> m:<slug>:w:<nn>
             # Replace -> m:<slug>:w:<yyyy-nn>

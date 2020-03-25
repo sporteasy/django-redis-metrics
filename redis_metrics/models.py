@@ -3,6 +3,10 @@ This app doesn't have any models, per se, but the following ``R`` class is a
 lightweight wrapper around Redis.
 
 """
+from builtins import zip
+from builtins import filter
+from builtins import range
+from builtins import object
 from collections import OrderedDict
 import datetime
 import json
@@ -145,7 +149,7 @@ class R(object):
         patts["yearly"] = "m:{0}:y:{1}".format(slug, date.strftime("%Y"))
 
         if granularity == 'all':
-            return patts.values()
+            return list(patts.values())
         else:
             return [patts[granularity]]
 
@@ -169,10 +173,10 @@ class R(object):
         # We also need to see the uncategorized metric slugs, so need some way
         # to check which slugs are not already stored.
         categorized_metrics = set([  # Flatten the list of metrics
-            slug for sublist in result.values() for slug in sublist
+            slug for sublist in list(result.values()) for slug in sublist
         ])
         f = lambda slug: slug not in categorized_metrics
-        uncategorized = filter(f, self.metric_slugs())
+        uncategorized = list(filter(f, self.metric_slugs()))
         if len(uncategorized) > 0:
             result['Uncategorized'] = uncategorized
         return result
@@ -387,7 +391,7 @@ class R(object):
             _history.append(column)  # Remember that slug's column of data
         _history.insert(0, periods)  # Finally, stick the time periods in the
                                      # first column.
-        return zip(*_history)  # Transpose the rows & columns
+        return list(zip(*_history))  # Transpose the rows & columns
 
     # Gauges. Gauges have a different prefix "g:" in order to differentiate
     # them from a metric of the same name.

@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 from datetime import datetime, timedelta
 
 from django import template
@@ -44,8 +47,8 @@ def gauge(slug, maximum=9000, size=125):
         'current_value': r.get_gauge(slug),
         'max_value': maximum,
         'size': size,
-        'yellow': maximum - (maximum / 2),
-        'red': maximum - (maximum / 4),
+        'yellow': maximum - (old_div(maximum, 2)),
+        'red': maximum - (old_div(maximum, 4)),
     }
 
 

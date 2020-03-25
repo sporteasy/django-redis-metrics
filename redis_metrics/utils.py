@@ -1,3 +1,4 @@
+from builtins import range
 import datetime
 import random
 from .models import R

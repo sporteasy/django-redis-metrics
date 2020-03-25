@@ -18,7 +18,7 @@ class Command(NoArgsCommand):
         r = R()
         metrics = {}
         categories = r.metric_slugs_by_category()
-        for category_name, slug_list in categories.items():
+        for category_name, slug_list in list(categories.items()):
             metrics[category_name] = []
             for slug in slug_list:
                 metric_values = r.get_metric_history(slug)

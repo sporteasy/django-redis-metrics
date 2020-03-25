@@ -89,9 +89,9 @@ class TestViews(TestCase):
             # Do the Request and test for content
             resp = self.client.get(url)
             self.assertEqual(resp.status_code, 200)
-            self.assertIn('Sample Category', resp.context['metrics'].keys())
-            self.assertIn('test-metric-a', resp.context['metrics'].values()[0])
-            self.assertIn('test-metric-b', resp.context['metrics'].values()[0])
+            self.assertIn('Sample Category', list(resp.context['metrics'].keys()))
+            self.assertIn('test-metric-a', list(resp.context['metrics'].values())[0])
+            self.assertIn('test-metric-b', list(resp.context['metrics'].values())[0])
 
             # Make sure our Mock R object called the right methods.
             mock_r.assert_has_calls([
