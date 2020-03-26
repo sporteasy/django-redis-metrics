@@ -1,5 +1,6 @@
 from django import template
 from django.template.defaultfilters import stringfilter
+from django.utils.encoding import force_text
 
 register = template.Library()
 
@@ -18,7 +19,7 @@ def strip_metric_prefix(value):
     * Yearly -- from ``m:<slug>:y:<yyyy>`` to ``y:<yyyy>``
 
     """
-    return ':'.join(value.split(":")[2:])
+    return u':'.join(force_text(value).split(u":")[2:])
 
 
 @register.filter(name='metric_slug')
@@ -35,4 +36,4 @@ def metric_slug(value):
     * Converts ``m:foo:y:<yyyy>`` to ``foo``
 
     """
-    return value.split(":")[1]
+    return force_text(value).split(u":")[1]

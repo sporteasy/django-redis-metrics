@@ -14,6 +14,7 @@ import redis
 
 from django.conf import settings
 from django.template.defaultfilters import slugify
+from django.utils.encoding import force_text
 
 from .templatetags import redis_metrics_filters as template_tags
 
@@ -43,9 +44,9 @@ class R(object):
           (default settings.REDIS_METRICS_SOCKET_CONNECTION_POOL)
 
         """
-        self._categories_key = kwargs.get('categories_key', 'categories')
-        self._metric_slugs_key = kwargs.get('metric_slugs_key', 'metric-slugs')
-        self._gauge_slugs_key = kwargs.get('gauge_slugs_key', 'gauge-slugs')
+        self._categories_key = kwargs.get('categories_key', u'categories')
+        self._metric_slugs_key = kwargs.get('metric_slugs_key', u'metric-slugs')
+        self._gauge_slugs_key = kwargs.get('gauge_slugs_key', u'gauge-slugs')
 
         self.host = kwargs.pop(
             'host',
@@ -93,7 +94,7 @@ class R(object):
         return (now - datetime.timedelta(days=d) for d in range(since_days))
 
     def _category_key(self, category):
-        return u"c:{0}".format(category)
+        return u"c:{0}".format(force_text(category))
 
     def _category_slugs(self, category):
         """Returns a list of the metric slugs for the given category"""
@@ -124,7 +125,7 @@ class R(object):
         # Store all category names in a Redis set, for easy retrieval
         self.r.sadd(self._categories_key, category)
 
-    def _build_keys(self, slug, date=None, granularity='all'):
+    def _build_keys(self, slug, date=None, granularity=u'all'):
         """Builds redis keys used to store metrics.
 
         * ``slug`` -- a slug used for a metric, e.g. "user-signups"
@@ -143,12 +144,12 @@ class R(object):
 
         # we want to keep the order, here: daily, weekly, monthly, yearly
         patts = OrderedDict()
-        patts["daily"] = "m:{0}:{1}".format(slug, date.strftime("%Y-%m-%d"))
-        patts["weekly"] = "m:{0}:w:{1}".format(slug, date.strftime("%Y-%U"))
-        patts["monthly"] = "m:{0}:m:{1}".format(slug, date.strftime("%Y-%m"))
-        patts["yearly"] = "m:{0}:y:{1}".format(slug, date.strftime("%Y"))
+        patts[u"daily"] = u"m:{0}:{1}".format(slug, date.strftime("%Y-%m-%d"))
+        patts[u"weekly"] = u"m:{0}:w:{1}".format(slug, date.strftime("%Y-%U"))
+        patts[u"monthly"] = u"m:{0}:m:{1}".format(slug, date.strftime("%Y-%m"))
+        patts[u"yearly"] = u"m:{0}:y:{1}".format(slug, date.strftime("%Y"))
 
-        if granularity == 'all':
+        if granularity == u'all':
             return list(patts.values())
         else:
             return [patts[granularity]]
@@ -157,7 +158,7 @@ class R(object):
         """Return a set of metric slugs (i.e. those used to create Redis keys)
         for this app."""
         keys = self.r.smembers(self._metric_slugs_key)
-        return set(s.split(":")[1] for s in keys)
+        return set(force_text(s).split(u":")[1] for s in keys)
 
     def metric_slugs_by_category(self):
         """Return a dictionary of category->metrics data:
@@ -168,7 +169,7 @@ class R(object):
         result = {}
         categories = self.r.smembers(self._categories_key)
         for category in categories:
-            result[category] = self._category_slugs(category)
+            result[force_text(category)] = self._category_slugs(category)
 
         # We also need to see the uncategorized metric slugs, so need some way
         # to check which slugs are not already stored.
@@ -178,7 +179,7 @@ class R(object):
         f = lambda slug: slug not in categorized_metrics
         uncategorized = list(filter(f, self.metric_slugs()))
         if len(uncategorized) > 0:
-            result['Uncategorized'] = uncategorized
+            result[u'Uncategorized'] = uncategorized
         return result
 
     def delete_metric(self, slug):
@@ -187,7 +188,7 @@ class R(object):
         # To remove all keys for a slug, I need to retrieve them all from
         # the set of metric keys, then filter the matching prefixes.
         # This is quite possibly the most inefficient way to do this :-/
-        prefix = "m:{0}:".format(slug)
+        prefix = u"m:{0}:".format(force_text(slug))
         keys = [
             k for k in self.r.smembers(self._metric_slugs_key)
             if k.startswith(prefix)
@@ -253,10 +254,10 @@ class R(object):
         """
         day_key, week_key, month_key, year_key = self._build_keys(slug)
         return {
-            'day': self.r.get(day_key),
-            'week': self.r.get(week_key),
-            'month': self.r.get(month_key),
-            'year': self.r.get(year_key),
+            u'day': self.r.get(day_key),
+            u'week': self.r.get(week_key),
+            u'month': self.r.get(month_key),
+            u'year': self.r.get(year_key),
         }
 
     def get_metrics(self, slug_list):
@@ -310,7 +311,7 @@ class R(object):
             # Store all category names in a Redis set, for easy retrieval
             self.r.sadd(self._categories_key, category)
 
-    def get_metric_history(self, slugs, since=None, granularity='daily'):
+    def get_metric_history(self, slugs, since=None, granularity=u'daily'):
         """Get history for one or more metrics.
 
         * ``slugs`` -- a slug OR a list of slugs
@@ -347,7 +348,7 @@ class R(object):
         return sorted(zip(keys, self.r.mget(keys)))
 
     def get_metric_history_as_columns(self, slugs, since=None,
-                                      granularity='daily'):
+                                      granularity=u'daily'):
         """Provides the same data as ``get_metric_history``, but in a columnar
         format. If you had the following yearly history, for example::
 
@@ -373,7 +374,7 @@ class R(object):
         """
         history = self.get_metric_history(slugs, since, granularity)
         _history = []  # new, columnar history
-        periods = ['Period']  # A separate, single column for the time period
+        periods = [u'Period']  # A separate, single column for the time period
         for s in slugs:
             column = [s]  # story all the data for a single slug
             for key, value in history:
@@ -399,11 +400,11 @@ class R(object):
         """Return a set of Gauges slugs (i.e. those used to create Redis keys)
         for this app."""
         keys = self.r.smembers(self._gauge_slugs_key)
-        return set(s.split(":")[1] for s in keys)
+        return set(force_text(s).split(u":")[1] for s in keys)
 
     def _gauge_key(self, slug):
         """Make sure our slugs have a consistent format."""
-        return "g:{0}".format(slugify(slug))
+        return u"g:{0}".format(slugify(slug))
 
     def gauge(self, slug, current_value):
         """Set the value for a Gauge.
