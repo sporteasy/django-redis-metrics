@@ -3,10 +3,6 @@ This app doesn't have any models, per se, but the following ``R`` class is a
 lightweight wrapper around Redis.
 
 """
-from builtins import zip
-from builtins import filter
-from builtins import range
-from builtins import object
 from collections import OrderedDict
 import datetime
 import json

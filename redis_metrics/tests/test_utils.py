@@ -1,4 +1,3 @@
-from builtins import range
 from datetime import date, timedelta
 from mock import call, patch, Mock
 
