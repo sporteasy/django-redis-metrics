@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from past.utils import old_div
 from datetime import datetime, timedelta
 
 from django.test import TestCase
@@ -108,8 +107,8 @@ class TestTemplateTags(TestCase):
                 'current_value': 100,
                 'max_value': 1000,
                 'size': 50,
-                'yellow': 1000 - (old_div(1000, 2)),
-                'red': 1000 - (old_div(1000, 4)),
+                'yellow': 1000 - (1000 // 2),
+                'red': 1000 - (1000 // 4),
             }
             self.assertEqual(result, expected_result)
             mock_r.assert_called_once_with()
